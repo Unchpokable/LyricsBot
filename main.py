@@ -38,6 +38,7 @@ async def RegisterUserRequest(msg: types.Message):
     result = await msg.answer("What searcher engine i should use for you?", reply_markup=CreateSearchersSelectKeyboard())
     request = UserRequest(artist.strip(), song.strip(), result.message_id, msg.from_id)
     _activeSessions[msg.from_id] = request
+    logging.info(f"Session created: {msg.from_id} with request: {request}")
     return
 
 
@@ -54,6 +55,7 @@ async def SearchLyrics(msg: types.Message):
     await msg.answer_document(types.InputFile(io.BytesIO(bin_file), filename=file))
     await _bot.delete_message(_activeSessions[msg.from_id].UserID, _activeSessions[msg.from_id].MessageID)
     del _activeSessions[msg.from_id]
+    logging.info(f"Session removed: {msg.from_id}")
     return
 
 

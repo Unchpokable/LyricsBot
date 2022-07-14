@@ -20,7 +20,7 @@ class GeniusLyricsWebLoader(LyricsWebLoaderBase):
         self._sourceUrl = r"https://api.genius.com/"
 
     def RequestLyrics(self, artist: str, song: str) -> bool:
-        search_result = self._makeSearchRequest(f"{artist} {song}")
+        search_result: Optional[RequestResponseData] = self._makeSearchRequest(f"{artist} {song}")
         if search_result is None:
             return False
         if not self._loadPageContent(search_result.GeniusLyricsWebPageUrl):
@@ -36,7 +36,7 @@ class GeniusLyricsWebLoader(LyricsWebLoaderBase):
         for line in lines.split("\n"):
             temp_lyrics.append((line, ""))
 
-        self._lyrics = LyricsProvider(artist, song, lyrics=temp_lyrics, translated=False, url=search_result.GeniusLyricsWebPageUrl)
+        self._lyrics = LyricsProvider(search_result.Artist, search_result.Song, lyrics=temp_lyrics, translated=False, url=search_result.GeniusLyricsWebPageUrl)
         return True
 
     def _loadPageContent(self, url: str) -> bool:
