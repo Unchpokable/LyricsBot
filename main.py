@@ -29,7 +29,7 @@ _dispatcher = Dispatcher(_bot)
 logging.basicConfig(level=logging.INFO)
 
 _modules = ModuleLoader(lambda cls: issubclass(cls, LyricsWebLoaderBase) and not inspect.isabstract(cls),
-                        auto_instantiate=False).Load("base")
+                        auto_instantiate=False).Load("implementations")
 _activeSessions: Dict[int, UserRequest] = {}
 
 

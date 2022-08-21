@@ -1,6 +1,6 @@
 from __future__ import annotations
 import inspect
-import sys
+import importlib
 from typing import *
 
 
@@ -18,7 +18,7 @@ class ModuleLoader(object):
     __autoInstantiate: bool
 
     def Load(self, module: str = None) -> Dict[str, _T_Class | _T_Object]:
-        self.__classes = dict(inspect.getmembers(sys.modules[module], lambda obj: inspect.isclass(obj) and self.__filter(obj)))
+        self.__classes = dict(inspect.getmembers(importlib.import_module(module), lambda obj: inspect.isclass(obj) and self.__filter(obj)))
         if self.__autoInstantiate:
             self._instantiate()
         return self.__classes
