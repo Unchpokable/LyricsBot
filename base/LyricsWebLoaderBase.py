@@ -1,8 +1,29 @@
 from abc import ABC as Abstract, abstractmethod
 from typing import *
+
+import requests.adapters
 from bs4 import BeautifulSoup
+import dataclasses
+import ssl
 
 _T_File_Descriptor = TypeVar("_T_File_Descriptor", bound=IO, covariant=False, contravariant=True)
+_V_Intermediate_Result = TypeVar("_V_Intermediate_Result")
+
+
+@dataclasses.dataclass
+class RequestResponseData:
+    Artist: str
+    Song: str
+    PageUrl: str
+    FullTitle: str
+
+
+class TLSAdapter(requests.adapters.HTTPAdapter):
+    def init_poolmanager(self, *args, **kwargs):
+        ctx = ssl.create_default_context()
+        ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+        kwargs['ssl_context'] = ctx
+        return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
 
 
 class LyricsProvider(object):
@@ -62,6 +83,27 @@ class LyricsProvider(object):
         return self.ExportAsString()
 
 
+class IntermediateResult:
+    _availableUrls: List[RequestResponseData]
+    _selection: int
+
+    @property
+    def AvailableUrls(self):
+        return self._availableUrls
+
+    def __init__(self, urls: List[RequestResponseData]):
+        self._availableUrls = urls
+
+    def ConfigureContinue(self, selection: int) -> None:
+        if selection not in range(0, len(self._availableUrls) - 1):
+            raise IndexError("Selected index not in viable range")
+        self._selection = selection
+
+    @property
+    def Selection(self) -> Optional[RequestResponseData]:
+        return self._availableUrls[self._selection]
+
+
 class LyricsWebLoaderBase(Abstract):
     _pageContent: BeautifulSoup
     _sourceUrl: str
@@ -75,12 +117,16 @@ class LyricsWebLoaderBase(Abstract):
     def SourceUrl(self) -> str:
         return self._sourceUrl
 
+    @SourceUrl.setter
+    def SourceUrl(self, value: str):
+        self._sourceUrl = value
+
     @property
     def Lyrics(self) -> LyricsProvider:
         return self._lyrics
 
     @abstractmethod
-    def RequestLyrics(self, artist: str, song: str) -> None:
+    def RequestLyrics(self, artist: str = None, song: str = None, continue_context: IntermediateResult = None) -> bool | _V_Intermediate_Result:
         raise NotImplementedError("Calling abstract method is restricted")
 
     @abstractmethod

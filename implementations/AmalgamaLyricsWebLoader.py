@@ -1,4 +1,4 @@
-from .LyricsWebLoaderBase import LyricsWebLoaderBase, LyricsProvider
+from base.LyricsWebLoaderBase import LyricsWebLoaderBase, LyricsProvider, TLSAdapter, IntermediateResult
 from bs4 import BeautifulSoup
 from typing import *
 import requests
@@ -10,7 +10,7 @@ class AmalgamaLyricsWebLoader(LyricsWebLoaderBase):
     def __init__(self):
         self._sourceUrl = r'https://www.amalgama-lab.com/songs/'
 
-    def RequestLyrics(self, artist: str, song: str) -> bool:
+    def RequestLyrics(self, artist: str = None, song: str = None, continue_context: IntermediateResult = None) -> bool:
         final_url = self._formatUrl(artist, song)
         if not self._loadPageContent(final_url):
             return False
@@ -19,7 +19,7 @@ class AmalgamaLyricsWebLoader(LyricsWebLoaderBase):
         for line in lines:
             orig = line.find("div", class_="original")
             translate = line.find("div", class_="translate")
-            if orig.find("strong") or translate.find("strong"):  # Если встречаем жирный текст, значит на странице несколько переводов и это - заголовок следующего. <h1></h1> для слабаков
+            if orig.find("strong") or translate.find("strong"):  # Если встречаем жирный текст, значит на странице несколько переводов и это - заголовок следующего.
                 break
             temp_lyrics.append((orig.text, translate.text))
         self._lyrics = LyricsProvider(artist, song, temp_lyrics, translated=True, url=final_url)
@@ -32,7 +32,9 @@ class AmalgamaLyricsWebLoader(LyricsWebLoaderBase):
         return self._sourceUrl + fr"{_artist[0].lower()}/{_artist.lower()}/{_song.lower()}.html"
 
     def _loadPageContent(self, url: str) -> bool:
-        resp = requests.get(url)
+        session = requests.session()
+        session.mount("https://", TLSAdapter())
+        resp = session.get(url)
         if resp.status_code != 200:
             return False
         # Костыль, т.к при ошибке в названии песни или исполнителя, или если перевода нет на сайте, сайт вместо ошибки отображает валидный html с сообщением
