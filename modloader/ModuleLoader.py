@@ -9,7 +9,7 @@ _T_Object = TypeVar("_T_Object", bound=object)
 
 
 class ModuleLoader(object):
-    def __init__(self, predicate: Callable[[object], bool], auto_instantiate: bool = True):
+    def __init__(self, predicate: Callable[[_T_Class], bool], auto_instantiate: bool = True):
         self.__filter = predicate
         self.__autoInstantiate = auto_instantiate
 
